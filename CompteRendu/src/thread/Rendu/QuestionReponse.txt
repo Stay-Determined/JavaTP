@@ -1,0 +1,77 @@
+Question 1 part 1 :
+Il est possible que le thread lié au compteur "1" est une priorité plus élevée et a eu donc plus d'occasion d'incrémenter
+son compteur que le thread lié au compteur "0" pour une même exécution parallèle.
+Aussi il est possible que la puissance du processeur
+est pu influencer le nombre d'incrémentation du compteur "1" comparé au compteur "0"
+
+Runnable est une interface qui contient une seule méthode : run.
+Runnable permet entre autre de créer des thread. Pour cela, elle doit être implémenté par une autre classe.
+
+
+Question 1 part 2 :
+La méthode interrupted verifie si le thread actuel a été interrompu et aussi remet à zéro le status d'interruption(donc a false) pour le thread actuel
+C'est une methode statique
+La methode isInterrupted verifie si le thread cible par la methode mais ne reinitialise pas le status d'interruption (contrairement à interrupted)
+Ce n'est pas une méthode statique
+
+Question 1 part 3 :
+Avec la ligne de commande, le programme va afficher "id 0 1\nid 0 1\n" sans arrêt dû au for(;;).
+Cela à pour conséquence une boucle qui ne s'arrête jamais pour chacun des deux thread créés
+
+
+Question 2 part 3 :
+Cela est dû aux threads qui modifient à l'infini la valeur de "value" et donc de "id", ce qui les font crash.
+
+
+Question 3 part 3 :
+Il y a toujours un problème de concurrence à cause du changement constant et infini de "value" et par extension de "id".
+
+Question 4 part 3 :
+Il faut utiliser la synchronisation avec "synchronized" ce qui permettra de prévenir les problèmes d'interference entre thread
+ainsi que des problèmes de consistence. Dans notre cas, cela permettra que "value" et "id" puissent être mis à jour par un
+thread sans que l'autre n'interfere.
+
+
+Question 1 part 4 :
+Car cette dernière va stocker la position du dernier token analysé(elle est partagée entre tous les appels à strtok) via une variable interne qui elle est statique.
+Il peut donc y avoir des problèmes de concurrence entre les thread essayant d'appeler en même temps la méthode strtok avec également en entrée
+la même chaine de caractères.
+
+Question 2 part 4 :
+La méthode est thread-safe grâce aux déclaration des variables partagée lastInput et lastOffset permettant aux threads de disposer de leur variables
+mais aussi pour être sur que ces derniers aient accès aux dernières valeurs mises à jours dans la mémoire partagée. Aussi, l'utilisation d'un bloc
+synchronized visant la classe strtok et permettant de s'assurer qu'un thread à la fois pourra accéder aux variables partagées.
+
+public static CharSequence strtok(CharSequence input, char delimiter) {
+    int offset;
+    CharSequence localInput;
+    int localOffset;
+
+    synchronized (strtok.class) {
+        if (input == null) {
+            localInput = lastInput;
+            localOffset = lastOffset;
+        } else {
+            localInput = input;
+            localOffset = 0;
+            lastInput = input;
+        }
+    }
+
+    for (int i = localOffset; i < localInput.length(); i++) {
+        if (localInput.charAt(i) == delimiter) {
+            synchronized (strtok.class) {
+                lastOffset = i + 1;
+            }
+            return localInput.subSequence(localOffset, i);
+        }
+    }
+
+    synchronized (strtok.class) {
+        lastInput = null;
+    }
+    return localInput.subSequence(localOffset, localInput.length());
+}
+
+private static volatile CharSequence lastInput;
+private static volatile int lastOffset;
